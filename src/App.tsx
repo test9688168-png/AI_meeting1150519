@@ -14,7 +14,8 @@ import {
   Languages, 
   History,
   Sparkles,
-  Copy
+  Copy,
+  Cpu
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -24,6 +25,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<'gemini' | 'nvidia'>('gemini');
 
   const handleGenerate = async () => {
     if (!transcript.trim()) return;
@@ -38,7 +40,7 @@ export default function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ transcript }),
+        body: JSON.stringify({ transcript, provider }),
       });
 
       const data = await response.json();
@@ -98,17 +100,69 @@ export default function App() {
           <section className="lg:col-span-5 space-y-6">
             <div className="space-y-2">
               <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2 uppercase tracking-wide">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> 會議逐字稿或筆記
+                <div className={`w-1.5 h-1.5 rounded-full ${provider === 'gemini' ? 'bg-blue-500' : 'bg-emerald-500'}`} /> 會議逐字稿或筆記
               </h2>
               <p className="text-sm text-gray-500">
                 請貼上您的會議逐字稿，AI 將為您整理總結、列出待辦事項並翻譯成英文。
               </p>
             </div>
 
+            {/* AI Provider Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
+                選擇 AI 服務提供商
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setProvider('gemini')}
+                  className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] cursor-pointer ${
+                    provider === 'gemini'
+                      ? 'border-blue-500 bg-blue-50/50 text-blue-700 shadow-sm shadow-blue-100/50'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    provider === 'gemini' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold truncate">Google Gemini</div>
+                    <div className="text-[9px] text-gray-400 font-medium truncate">gemini-2.5-flash-lite</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setProvider('nvidia')}
+                  className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] cursor-pointer ${
+                    provider === 'nvidia'
+                      ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 shadow-sm shadow-emerald-100/50'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    provider === 'nvidia' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    <Cpu className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold truncate">NVIDIA AI</div>
+                    <div className="text-[9px] text-gray-400 font-medium truncate">nemotron-mini-4b</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div className="relative group">
               <textarea
                 id="transcript-input"
-                className="w-full h-80 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all resize-none outline-none text-sm leading-relaxed"
+                className={`w-full h-80 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-4 transition-all resize-none outline-none text-sm leading-relaxed ${
+                  provider === 'gemini' 
+                    ? 'focus:ring-blue-50 focus:border-blue-500' 
+                    : 'focus:ring-emerald-50 focus:border-emerald-500'
+                }`}
                 placeholder="在此貼上會議逐字稿內容..."
                 value={transcript}
                 onChange={(e) => setTranscript(e.target.value)}
@@ -125,7 +179,9 @@ export default function App() {
               className={`w-full py-4 px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all cursor-pointer shadow-lg active:scale-[0.98]
                 ${isLoading || !transcript.trim() 
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' 
-                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200 hover:shadow-blue-300'}`}
+                  : provider === 'gemini'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200 hover:shadow-blue-300'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200 hover:shadow-emerald-300'}`}
             >
               {isLoading ? (
                 <>
@@ -206,7 +262,9 @@ export default function App() {
                     className="h-full flex flex-col items-center justify-center space-y-8 py-20"
                   >
                     <div className="relative">
-                      <div className="w-16 h-16 border-4 border-blue-50 border-t-blue-500 rounded-full animate-spin" />
+                      <div className={`w-16 h-16 border-4 border-gray-100 ${
+                        provider === 'gemini' ? 'border-t-blue-500' : 'border-t-emerald-500'
+                      } rounded-full animate-spin`} />
                     </div>
                     <div className="space-y-4 w-full px-12">
                       <div className="h-4 bg-gray-50 rounded-full animate-pulse" />
@@ -219,7 +277,9 @@ export default function App() {
                     key="result"
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="prose prose-sm max-w-none prose-blue"
+                    className={`prose prose-sm max-w-none ${
+                      provider === 'gemini' ? 'prose-blue' : 'prose-emerald'
+                    }`}
                   >
                     <div className="markdown-body">
                       <ReactMarkdown>{result}</ReactMarkdown>
@@ -246,7 +306,7 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-center gap-4 text-[10px] font-mono text-gray-400 uppercase tracking-widest">
           <span>&copy; 2024 AI Meeting Assistant</span>
           <span>•</span>
-          <span>Powered by Gemini 3</span>
+          <span>Powered by Gemini & NVIDIA</span>
         </div>
       </footer>
 
